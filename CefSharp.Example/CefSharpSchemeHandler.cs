@@ -19,7 +19,7 @@ namespace CefSharp.Example
 
         private string mimeType;
         private MemoryStream stream;
-        
+
         static CefSharpSchemeHandler()
         {
             ResourceDictionary = new Dictionary<string, string>
@@ -125,7 +125,7 @@ namespace CefSharp.Example
 
             return false;
         }
-        
+
 
         void IResourceHandler.GetResponseHeaders(IResponse response, out long responseLength, out string redirectUrl)
         {
@@ -151,7 +151,7 @@ namespace CefSharp.Example
             //Data out represents an underlying buffer (typically 32kb in size).
             var buffer = new byte[dataOut.Length];
             bytesRead = stream.Read(buffer, 0, buffer.Length);
-            
+
             dataOut.Write(buffer, 0, buffer.Length);
 
             return bytesRead > 0;
@@ -169,7 +169,7 @@ namespace CefSharp.Example
 
         void IResourceHandler.Cancel()
         {
-            
+
         }
     }
 }

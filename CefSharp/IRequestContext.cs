@@ -35,7 +35,7 @@ namespace CefSharp
         /// Returns the default cookie manager for this object. This will be the global
         /// cookie manager if this object is the global request context. Otherwise,
         /// this will be the default cookie manager used when this request context does
-        /// not receive a value via IRequestContextHandler.GetCookieManager(). 
+        /// not receive a value via IRequestContextHandler.GetCookieManager().
         /// </summary>
         /// <param name="callback">If callback is non-NULL it will be executed asnychronously on the CEF IO thread
         /// after the manager's storage has been initialized.</param>
@@ -59,7 +59,7 @@ namespace CefSharp
         bool RegisterSchemeHandlerFactory(string schemeName, string domainName, ISchemeHandlerFactory factory);
 
         /// <summary>
-        /// Clear all registered scheme handler factories. 
+        /// Clear all registered scheme handler factories.
         /// </summary>
         /// <returns>Returns false on error.</returns>
         bool ClearSchemeHandlerFactories();

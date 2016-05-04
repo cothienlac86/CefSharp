@@ -33,7 +33,7 @@ namespace CefSharp.WinForms.Example
         private void BrowserHandleDestroyed(object sender, EventArgs e)
         {
             ReleaseHandle();
-
+            
             var browser = (Control)sender;
 
             browser.HandleDestroyed -= BrowserHandleDestroyed;

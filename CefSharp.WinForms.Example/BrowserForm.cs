@@ -24,8 +24,8 @@ namespace CefSharp.WinForms.Example
             Text = "CefSharp.WinForms.Example - " + bitness;
             WindowState = FormWindowState.Maximized;
 
-            AddTab(CefExample.DefaultUrl);
-
+            //AddTab(CefExample.DefaultUrl);
+            AddTab("http://rongbay.com/TP-HCM/Mua-Ban-nha-dat-c15.html");
             //Only perform layout when control has completly finished resizing
             ResizeBegin += (s, e) => SuspendLayout();
             ResizeEnd += (s, e) => ResumeLayout(true);
@@ -45,7 +45,7 @@ namespace CefSharp.WinForms.Example
                 Dock = DockStyle.Fill
             };
 
-            //This call isn't required for the sample to work. 
+            //This call isn't required for the sample to work.
             //It's sole purpose is to demonstrate that #553 has been resolved.
             browser.CreateControl();
 
@@ -254,7 +254,7 @@ namespace CefSharp.WinForms.Example
                 //var windowInfo = new WindowInfo();
                 ////DevTools becomes a child of the panel, we use it's dimesions
                 //windowInfo.SetAsChild(panel.Handle, rect.Left, rect.Top, rect.Right, rect.Bottom);
-                ////Show DevTools in our panel 
+                ////Show DevTools in our panel
                 //browser.ShowDevTools(windowInfo);
             }
         }
@@ -338,7 +338,7 @@ namespace CefSharp.WinForms.Example
             if (control != null)
             {
                 var frame = control.Browser.GetFocusedFrame();
-                
+
                 //Execute extension method
                 frame.ActiveElementAcceptsTextInput().ContinueWith(task =>
                 {

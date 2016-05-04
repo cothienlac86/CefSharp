@@ -16,7 +16,7 @@ namespace CefSharp.WinForms.Example
         {
             const bool simpleSubProcess = false;
 
-            Cef.EnableHighDPISupport();
+             Cef.EnableHighDPISupport();
 
             //NOTE: Using a simple sub processes uses your existing application executable to spawn instances of the sub process.
             //Features like JSB, EvaluateScriptAsync, custom schemes require the CefSharp.BrowserSubprocess to function
@@ -65,9 +65,11 @@ namespace CefSharp.WinForms.Example
                     //This function is used to integrate the CEF message loop into an existing application message loop.
                     //Care must be taken to balance performance against excessive CPU usage.
                     //This function should only be called on the main application thread and only if CefInitialize() is called with a CefSettings.multi_threaded_message_loop value of false.
-                    //This function will not block. 
+                    //This function will not block.
 
+#pragma warning disable CS0162 // Unreachable code detected
                     Application.Idle += (s, e) => Cef.DoMessageLoopWork();
+#pragma warning restore CS0162 // Unreachable code detected
                 }
 
                 var browser = new BrowserForm();
