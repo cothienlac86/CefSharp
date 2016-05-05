@@ -315,8 +315,9 @@ namespace CefSharp
             }
 
             resourceHandler.RegisterHandler(url, ResourceHandler.FromString(html, encoding, true));
-
+            Console.WriteLine("HTML Render=" + html.ToString());
             browser.Load(url);
+
         }
 
         /// <summary>

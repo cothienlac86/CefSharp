@@ -1,35 +1,38 @@
-﻿// Copyright © 2010-2016 The CefSharp Authors. All rights reserved.
+﻿// Copyright © 2010-2015 The CefSharp Authors. All rights reserved.
 //
 // Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
 using System;
 using System.Diagnostics;
-using System.Drawing;
 using System.IO;
-using System.Threading.Tasks;
-using CefSharp.Example;
+using System.Threading;
+using CefSharp.OffScreen;
+using System.Text;
 
-namespace CefSharp.OffScreen.Example
+namespace CefSharp.MinimalExample.OffScreen
 {
     public class Program
     {
-        private const string TestUrl = "https://www.google.com/";
+        private static ChromiumWebBrowser browser;
 
         public static void Main(string[] args)
         {
-            Console.WriteLine("This example application will load {0}, take a screenshot, and save it to your desktop.", TestUrl);
-            Console.WriteLine("You may see a lot of Chromium debugging output, please wait...");
+            const string testUrl = "http://rongbay.com/TP-HCM/Mua-Ban-nha-dat-c15.html";
+
+            Console.WriteLine("This example application will load {0}, take a screenshot, and save it to your desktop.", testUrl);
+            Console.WriteLine("You may see Chromium debugging output, please wait...");
             Console.WriteLine();
 
-            // You need to replace this with your own call to Cef.Initialize();
-            CefExample.Init(true, multiThreadedMessageLoop:true);
+            //Perform dependency check to make sure all relevant resources are in our output directory.
+            Cef.Initialize(new CefSettings(), shutdownOnProcessExit: true, performDependencyCheck: true);
 
-            MainAsync("cachePath1", 1.0);
-            //Demo showing Zoom Level of 3.0
-            //Using seperate request contexts allows the urls from the same domain to have independent zoom levels
-            //otherwise they would be the same - default behaviour of Chromium
-            //MainAsync("cachePath2", 3.0);
-
+            // Create the offscreen Chromium browser.
+            browser = new ChromiumWebBrowser(testUrl);
+            //browser.GetMainFrame().Cop
+            // An event that is fired when the first page is finished loading.
+            // This returns to us from another thread.
+            browser.LoadingStateChanged += BrowserLoadingStateChanged;
+            browser.BrowserInitialized += BrowserInited;
             // We have to wait for something, otherwise the process will exit too soon.
             Console.ReadKey();
 
@@ -38,105 +41,65 @@ namespace CefSharp.OffScreen.Example
             Cef.Shutdown();
         }
 
-        private static async void MainAsync(string cachePath, double zoomLevel)
+        private static void BrowserInited(object sender, IsBrowserInitializedChangedEventArgs e)
         {
-            var browserSettings = new BrowserSettings();
-            //Reduce rendering speed to one frame per second so it's easier to take screen shots
-            browserSettings.WindowlessFrameRate = 1;
-            var requestContextSettings = new RequestContextSettings { CachePath = cachePath };
-
-            // RequestContext can be shared between browser instances and allows for custom settings
-            // e.g. CachePath
-            using(var requestContext = new RequestContext(requestContextSettings))
-            using (var browser = new ChromiumWebBrowser(TestUrl, browserSettings, requestContext))
+            if (e.IsBrowserInitialized)
             {
-                if (zoomLevel > 1)
+                StringBuilder js = new StringBuilder();
+                js.AppendLine("function getLinks() {");
+                js.AppendLine("     var links = $('.link_direct');");
+                js.AppendLine("     var arrUrls = [];");
+                js.AppendLine("     $(links).each(function() {");
+                js.AppendLine("     //arrUrls[] = $(this).attr('href');");
+                js.AppendLine("     alert($(this).attr('href'));");
+                js.AppendLine("}");
+                js.AppendLine("getLinks();");
+
+                var scriptTask = browser.EvaluateScriptAsync(js.ToString());
+                scriptTask.ContinueWith(t =>
                 {
-                    browser.FrameLoadStart += (s, argsi) =>
+                    //Give the browser a little time to render
+                    Thread.Sleep(500);
+                    // Wait for the screenshot to be taken.
+                    var task = browser.GetSourceAsync();
+                    task.ContinueWith(x =>
                     {
-                        var b = (ChromiumWebBrowser)s;
-                        if (argsi.Frame.IsMain)
+                        // Make a file to save it to (e.g. C:\Users\jan\Desktop\CefSharp screenshot.png)
+                        //var screenshotPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "CefSharp screenshot.png");
+
+                        //Console.WriteLine();
+                        //Console.WriteLine("Screenshot ready. Saving to {0}", screenshotPath);
+
+                        // Save the Bitmap to the path.
+                        // The image type is auto-detected via the ".png" extension.
+                        if (!x.IsFaulted)
                         {
-                            b.SetZoomLevel(zoomLevel);
+                            var link = task.Result;
+                            Console.WriteLine();
+                            Console.WriteLine("Link:{0}", link);
+                            // We no longer need the Bitmap.
+                            // Dispose it to avoid keeping the memory alive.  Especially important in 32-bit applications.
+                            task.Dispose();
                         }
-                    };
-                }
-                await LoadPageAsync(browser);
-
-                var preferences = requestContext.GetAllPreferences(true);
-
-                // For Google.com pre-pupulate the search text box
-                await browser.EvaluateScriptAsync("document.getElementById('lst-ib').value = 'CefSharp Was Here!'");
-
-                // Wait for the screenshot to be taken,
-                // if one exists ignore it, wait for a new one to make sure we have the most up to date
-                await browser.ScreenshotAsync(true).ContinueWith(DisplayBitmap);
-
-                await LoadPageAsync(browser, "http://github.com");
-
-                
-                //Gets a wrapper around the underlying CefBrowser instance
-                var cefBrowser = browser.GetBrowser();
-                // Gets a warpper around the CefBrowserHost instance
-                // You can perform a lot of low level browser operations using this interface
-                var cefHost = cefBrowser.GetHost();
-
-                //You can call Invalidate to redraw/refresh the image
-                cefHost.Invalidate(PaintElementType.View);
-
-                // Wait for the screenshot to be taken.
-                await browser.ScreenshotAsync(true).ContinueWith(DisplayBitmap);
+                        Console.WriteLine("Links loaded...");
+                        Console.WriteLine("Image viewer launched.  Press any key to exit.");
+                    });
+                });
             }
         }
 
-        public static Task LoadPageAsync(IWebBrowser browser, string address = null)
+        private static void BrowserLoadingStateChanged(object sender, LoadingStateChangedEventArgs e)
         {
-            var tcs = new TaskCompletionSource<bool>();
-
-            EventHandler<LoadingStateChangedEventArgs> handler = null;
-            handler = (sender, args) =>
+            // Check to see if loading is complete - this event is called twice, one when loading starts
+            // second time when it's finished
+            // (rather than an iframe within the main frame).
+            if (!e.IsLoading)
             {
-                //Wait for while page to finish loading not just the first frame
-                if (!args.IsLoading)
-                {
-                    browser.LoadingStateChanged -= handler;
-                    tcs.TrySetResult(true);
-                }
-            };
+                // Remove the load event handler, because we only want one snapshot of the initial page.
+                //browser.LoadingStateChanged -= BrowserLoadingStateChanged;
 
-            browser.LoadingStateChanged += handler;
 
-            if (!string.IsNullOrEmpty(address))
-            {
-                browser.Load(address);
             }
-            return tcs.Task;
-        }
-
-        private static void DisplayBitmap(Task<Bitmap> task)
-        {
-            // Make a file to save it to (e.g. C:\Users\jan\Desktop\CefSharp screenshot.png)
-            var screenshotPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "CefSharp screenshot" + DateTime.Now.Ticks + ".png");
-
-            Console.WriteLine();
-            Console.WriteLine("Screenshot ready. Saving to {0}", screenshotPath);
-
-            var bitmap = task.Result;
-
-            // Save the Bitmap to the path.
-            // The image type is auto-detected via the ".png" extension.
-            bitmap.Save(screenshotPath);
-
-            // We no longer need the Bitmap.
-            // Dispose it to avoid keeping the memory alive.  Especially important in 32-bit applications.
-            bitmap.Dispose();
-
-            Console.WriteLine("Screenshot saved.  Launching your default image viewer...");
-
-            // Tell Windows to launch the saved image.
-            Process.Start(screenshotPath);
-
-            Console.WriteLine("Image viewer launched.  Press any key to exit.");
         }
     }
 }

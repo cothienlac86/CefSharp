@@ -51,6 +51,10 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="HtmlAgilityPack">
+      <HintPath>bin\x64\HtmlAgilityPack.dll</HintPath>
+    </Reference>
+    <Reference Include="PresentationFramework" />
     <Reference Include="System" />
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
@@ -162,6 +166,10 @@
     <None Include="Resources\chromium-256.png" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\..\..\..\Projects\Bat-Dong-San\Source-Code\GitHub-SC\GetInfoWeb\GetInfoWeb.csproj">
+      <Project>{80ab0789-2345-4b99-9072-3d099137946e}</Project>
+      <Name>GetInfoWeb</Name>
+    </ProjectReference>
     <ProjectReference Include="..\CefSharp.Core\CefSharp.Core.vcxproj">
       <Project>{7b495581-2271-4f41-9476-acb86e8c864f}</Project>
       <Name>CefSharp.Core</Name>
@@ -178,6 +186,9 @@
       <Project>{a55848cc-10e7-40cb-addb-04740b16dd43}</Project>
       <Name>CefSharp</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Resources\DownloadedResource\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="$(SolutionDir)\CefSharp.props" />

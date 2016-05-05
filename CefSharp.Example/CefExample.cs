@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using CefSharp.Example.Properties;
 using CefSharp.Example.Proxy;
 using CefSharp.Internals;
+using CefSharp.Example;
 
 namespace CefSharp.Example
 {
@@ -25,7 +26,7 @@ namespace CefSharp.Example
         public const string RenderProcessCrashedUrl = "http://processcrashed";
         public const string TestUnicodeResourceUrl = "http://test/resource/loadUnicode";
         public const string PopupParentUrl = "http://www.w3schools.com/jsref/tryit.asp?filename=tryjsref_win_close";
-        
+
         // Use when debugging the actual SubProcess, to make breakpoints etc. inside that project work.
         private static readonly bool DebuggingSubProcess = Debugger.IsAttached;
         private static string PluginInformation = "";
@@ -44,8 +45,9 @@ namespace CefSharp.Example
             var settings = new CefSettings();
             settings.RemoteDebuggingPort = 8088;
             //The location where cache data will be stored on disk. If empty an in-memory cache will be used for some features and a temporary disk cache for others.
-            //HTML5 databases such as localStorage will only persist across sessions if a cache path is specified. 
+            //HTML5 databases such as localStorage will only persist across sessions if a cache path is specified.
             settings.CachePath = "cache";
+            settings.UserAgent = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36";
             //settings.UserAgent = "CefSharp Browser" + Cef.CefSharpVersion; // Example User Agent
             //settings.CefCommandLineArgs.Add("renderer-process-limit", "1");
             //settings.CefCommandLineArgs.Add("renderer-startup-dialog", "1");
@@ -54,13 +56,13 @@ namespace CefSharp.Example
             //settings.CefCommandLineArgs.Add("debug-plugin-loading", "1"); //Dumps extra logging about plugin loading to the log file.
             //settings.CefCommandLineArgs.Add("disable-plugins-discovery", "1"); //Disable discovering third-party plugins. Effectively loading only ones shipped with the browser plus third-party ones as specified by --extra-plugin-dir and --load-plugin switches
             //settings.CefCommandLineArgs.Add("enable-system-flash", "1"); //Automatically discovered and load a system-wide installation of Pepper Flash.
-            //settings.CefCommandLineArgs.Add("allow-running-insecure-content", "1"); //By default, an https page cannot run JavaScript, CSS or plugins from http URLs. This provides an override to get the old insecure behavior. Only available in 47 and above.
+            settings.CefCommandLineArgs.Add("allow-running-insecure-content", "1"); //By default, an https page cannot run JavaScript, CSS or plugins from http URLs. This provides an override to get the old insecure behavior. Only available in 47 and above.
 
             //settings.CefCommandLineArgs.Add("enable-logging", "1"); //Enable Logging for the Renderer process (will open with a cmd prompt and output debug messages - use in conjunction with setting LogSeverity = LogSeverity.Verbose;)
-            //settings.LogSeverity = LogSeverity.Verbose; // Needed for enable-logging to output messages
+            settings.LogSeverity = LogSeverity.Verbose; // Needed for enable-logging to output messages
 
-            //settings.CefCommandLineArgs.Add("disable-extensions", "1"); //Extension support can be disabled
-            //settings.CefCommandLineArgs.Add("disable-pdf-extension", "1"); //The PDF extension specifically can be disabled
+            settings.CefCommandLineArgs.Add("disable-extensions", "1"); //Extension support can be disabled
+            settings.CefCommandLineArgs.Add("disable-pdf-extension", "1"); //The PDF extension specifically can be disabled
 
             //Load the pepper flash player that comes with Google Chrome - may be possible to load these values from the registry and query the dll for it's version info (Step 2 not strictly required it seems)
             //settings.CefCommandLineArgs.Add("ppapi-flash-path", @"C:\Program Files (x86)\Google\Chrome\Application\47.0.2526.106\PepperFlash\pepflashplayer.dll"); //Load a specific pepper flash version (Step 1 of 2)
@@ -76,13 +78,13 @@ namespace CefSharp.Example
             //settings.SetOffScreenRenderingBestPerformanceArgs();
             //settings.CefCommandLineArgs.Add("disable-gpu", "1");
             //settings.CefCommandLineArgs.Add("disable-gpu-compositing", "1");
-            //settings.CefCommandLineArgs.Add("enable-begin-frame-scheduling", "1");
+            //settings.Cefhttp://test/resource/loadCommandLineArgs.Add("enable-begin-frame-scheduling", "1");
 
             //settings.CefCommandLineArgs.Add("disable-gpu-vsync", "1"); //Disable Vsync
 
             //Disables the DirectWrite font rendering system on windows.
             //Possibly useful when experiencing blury fonts.
-            //settings.CefCommandLineArgs.Add("disable-direct-write", "1");
+            settings.CefCommandLineArgs.Add("disable-direct-write", "1");
 
             settings.MultiThreadedMessageLoop = multiThreadedMessageLoop;
 
@@ -94,7 +96,7 @@ namespace CefSharp.Example
                 // https://bitbucket.org/chromiumembedded/cef/issues/1689
                 //settings.CefCommandLineArgs.Add("disable-surfaces", "1");
                 settings.EnableInternalPdfViewerOffScreen();
-                
+
                 // DevTools doesn't seem to be working when this is enabled
                 // http://magpcss.org/ceforum/viewtopic.php?f=6&t=14095
                 //settings.CefCommandLineArgs.Add("enable-begin-frame-scheduling", "1");
@@ -123,7 +125,6 @@ namespace CefSharp.Example
                     break;
                 }
             }
-            
             //settings.LogSeverity = LogSeverity.Verbose;
 
             if (DebuggingSubProcess)
@@ -144,6 +145,12 @@ namespace CefSharp.Example
                 SchemeName = CefSharpSchemeHandlerFactory.SchemeNameTest,
                 SchemeHandlerFactory = new CefSharpSchemeHandlerFactory()
             });
+
+            //settings.RegisterScheme(new CefCustomScheme
+            //{
+            //    SchemeName = MySchemaHandlerFactory.SchemaName,
+            //    SchemeHandlerFactory = new MySchemaHandlerFactory()
+            //});
 
             settings.RegisterExtension(new CefExtension("cefsharp/example", Resources.extension));
 
@@ -198,7 +205,7 @@ namespace CefSharp.Example
                     pluginBody.Append("<th>Version</th>");
                     pluginBody.Append("<th>Path</th>");
                     pluginBody.Append("</tr>");
-                
+
                     var plugins = await Cef.GetPlugins();
 
                     if(plugins.Count == 0)
